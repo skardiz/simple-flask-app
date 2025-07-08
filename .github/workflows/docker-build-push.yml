@@ -1,0 +1,42 @@
+# Имя нашего пайплайна, оно будет отображаться в интерфейсе GitHub
+name: Build and Push Docker Image
+
+# Триггер: этот пайплайн будет запускаться при каждом пуше в ветку 'main'
+on:
+  push:
+    branches: [ "main" ]
+
+# Задачи: здесь описываются работы, которые нужно выполнить
+jobs:
+  # Наша единственная задача - сборка и публикация
+  build-and-push:
+    # Указываем, что задача должна выполняться на виртуальной машине с Ubuntu
+    runs-on: ubuntu-latest
+    
+    # Шаги, из которых состоит задача
+    steps:
+      # Шаг 1: Клонирование репозитория
+      # Этот экшен скачивает код вашего репозитория на виртуальную машину
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Шаг 2: Вход в Docker Hub
+      # Этот экшен использует секреты для безопасного входа в ваш аккаунт
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # Шаг 3: Сборка и публикация образа
+      # Этот экшен находит ваш Dockerfile, собирает образ и отправляет его
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          # Указывает, что сборку нужно запустить из текущей папки
+          context: .
+          # Говорит, что образ нужно сразу отправить в репозиторий
+          push: true
+          # Теги (имя) для вашего образа на Docker Hub.
+          # Формат: ваш_логин/имя_репозитория:latest
+          tags: skardiz/simple-flask-app:latest
