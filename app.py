@@ -1,4 +1,4 @@
-# Импортируем класс Flask для создания веб-приложения
+# Импортируем класс Flask для создания веб-приложения!
 from flask import Flask
 # Импортируем datetime, чтобы получать текущее время
 from datetime import datetime
