@@ -31,15 +31,20 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Authenticate in Yandex Cloud
-        # ИСПРАВЛЕНО: Указываем правильный путь к action
-        uses: yc-actions/auth-action@v1
-        with:
-          # Передаем содержимое key.json напрямую в action
-          service_account_key: ${{ secrets.YC_SA_KEY_JSON }}
+      - name: Install Yandex Cloud CLI
+        id: yc-install
+        # Этот официальный action правильно устанавливает CLI
+        uses: yc-actions/yc-cli-action@v2.1.0
 
-      - name: Deploy to Kubernetes
+      - name: Authenticate in Yandex Cloud
+        # Этот шаг правильно создает файл ключа и настраивает профиль
         run: |
-          # После yc-actions/auth-action, утилиты yc и kubectl уже настроены
+          echo '${{ secrets.YC_SA_KEY_JSON }}' > key.json
+          yc config profile create k8s-deployer
+          yc config set service-account-key key.json
+          
+      - name: Deploy to Kubernetes
+        # Этот шаг получает доступ к кластеру и применяет манифест
+        run: |
           yc managed-kubernetes cluster get-credentials my-app-cluster --external
           kubectl apply -f deployment.yaml
