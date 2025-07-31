@@ -31,16 +31,24 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Install and Authenticate in Yandex Cloud
-        # ИСПРАВЛЕНО: Указываем правильный, официальный путь к action
-        uses: yandex-cloud/yc-cli-action@v2.1.0
-        with:
-          # Передаем содержимое key.json напрямую в action
-          # Он сам установит yc, kubectl и настроит аутентификацию
-          service_account_key: ${{ secrets.YC_SA_KEY_JSON }}
+      - name: Install Yandex Cloud CLI
+        run: |
+          # Устанавливаем CLI официальным скриптом
+          curl -sSL https://storage.yandexcloud.net/yandexcloud-yc/install.sh | bash
+          # ВАЖНО: Добавляем путь к установленному yc в переменную PATH для всех последующих шагов
+          echo "/home/runner/yandex-cloud/bin" >> $GITHUB_PATH
+
+      - name: Authenticate in Yandex Cloud
+        run: |
+          # Создаем файл ключа, используя одинарные кавычки для корректной записи
+          echo '${{ secrets.YC_SA_KEY_JSON }}' > key.json
+          # Настраиваем профиль для аутентификации
+          yc config profile create k8s-deployer
+          yc config set service-account-key key.json
           
       - name: Deploy to Kubernetes
         run: |
-          # После yandex-cloud/yc-cli-action, утилиты yc и kubectl уже настроены
+          # Получаем доступ к кластеру. yc и kubectl уже доступны благодаря предыдущим шагам.
           yc managed-kubernetes cluster get-credentials my-app-cluster --external
+          # Применяем наш манифест для развертывания приложения
           kubectl apply -f deployment.yaml
