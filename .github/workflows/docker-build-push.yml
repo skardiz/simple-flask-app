@@ -28,6 +28,7 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
+      # ИСПРАВЛЕНО: Добавляем критически важный шаг скачивания кода
       - name: Checkout code
         uses: actions/checkout@v3
 
@@ -44,6 +45,6 @@ jobs:
           
       - name: Deploy to Kubernetes
         run: |
-          # ИСПРАВЛЕНО: Используем ID кластера из секрета для надежного доступа
           yc managed-kubernetes cluster get-credentials ${{ secrets.K8S_CLUSTER_ID }} --external
+          # Теперь эта команда найдет файл, так как он был скачан на шаге Checkout
           kubectl apply -f deployment.yaml
