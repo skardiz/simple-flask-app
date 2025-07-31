@@ -25,12 +25,10 @@ jobs:
           tags: skardiz/simple-flask-app:latest
 
   deploy:
-    # Этот шаг зависит от успешной сборки образа
     needs: build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        # Нам нужен код, чтобы получить доступ к файлу deployment.yaml
         uses: actions/checkout@v3
 
       - name: Install Yandex Cloud CLI
@@ -40,14 +38,20 @@ jobs:
       - name: Authenticate in Yandex Cloud
         # Эта команда настраивает yc и kubectl для работы с вашим кластером
         run: |
+          # Добавляем наш путь к yc в переменную PATH для текущего шага
+          source "/home/runner/yandex-cloud/path.bash.inc"
+          
           echo "${{ secrets.YC_SA_KEY_JSON }}" > key.json
           yc config profile create k8s-deployer
           yc config set service-account-key key.json
-          yc config set cloud-id ${{ secrets.YC_CLOUD_ID }}
-          yc config set folder-id ${{ secrets.YC_FOLDER_ID }}
+          # ИСПРАВЛЕНО: Добавляем кавычки вокруг значений
+          yc config set cloud-id "${{ secrets.YC_CLOUD_ID }}"
+          yc config set folder-id "${{ secrets.YC_FOLDER_ID }}"
           yc managed-kubernetes cluster get-credentials my-app-cluster --external
 
       - name: Deploy to Kubernetes
-        # Это единственная команда, которая теперь нужна для развертывания!
         run: |
+          # Добавляем наш путь к yc в переменную PATH, чтобы kubectl был доступен
+          source "/home/runner/yandex-cloud/path.bash.inc"
+          
           kubectl apply -f deployment.yaml
